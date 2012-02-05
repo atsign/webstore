@@ -252,10 +252,12 @@ text-shadow:#000 1px 1px 1px;
 }
 
 #options .whitebutton,.whitebutton input{
-background:none;
+background:url(images/tab_bg_hover.png) repeat-x;
 border:1px solid #ddd;
-color:#000;
-text-shadow:#000 0px;
+color:#fff;
+font-weight:normal;
+font-size: small;
+text-shadow:none;
 
 }
 
@@ -638,3 +640,23 @@ margin-top: 184px;
 margin-left: 10px;
 font-size: 10px;
 }
+
+.datagrid {
+	 width:500px;
+	 border:1px solid #CCCCCC;
+	 margin-left: 200px;
+	 margin-top: 4px;
+	 }
+
+.dtg_column { border-bottom: 1px solid #CCCCCC; }
+
+.dtg_header { 
+	font-weight:bold;
+	background-color:#aaaaaa;
+	border-top: 1px solid #CCCCCC; 
+	border-bottom: 1px solid #a2b6ff; 
+	background-image: url(images/title_bg.png);
+	background-repeat: repeat-x;
+	background-position: bottom;
+}
+

@@ -39,8 +39,7 @@
 						<?php if($_CONTROL->EditMode): ?>
 <div class="smodule_config">
 
-Creating a batch here.
-
+<?php $_CONTROL->dtgGrid->Render(); ?>
 								
 </div>
 <?php endif; ?>

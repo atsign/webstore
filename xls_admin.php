@@ -1926,7 +1926,7 @@
 		public $fields;
 		public $helpers = array();
 		
-		
+		public $dtgGrid;
 		protected $objParentObject;
 
 		public $page;
@@ -1982,7 +1982,30 @@
 		 	// Let's record the reference to the form's MethodCallBack
 		 	$this->strMethodCallBack = $strMethodCallBack;
 	
-				
+			
+			
+			$this->dtgGrid = new QDataGrid($this);
+			$this->dtgGrid->CellPadding = 5;
+			$this->dtgGrid->CellSpacing = 0;
+			$this->dtgGrid->CssClass = "datagrid";
+
+	    	$this->dtgGrid->AddColumn(new QDataGridColumn('Start Price', '<?= $_ITEM->StartPrice ?>', 'CssClass="dtg_column"'));
+			$this->dtgGrid->AddColumn(new QDataGridColumn('End Price', '<?= $_ITEM->EndPrice ?>', 'Width=200', 'CssClass="dtg_column"', 'HtmlEntities=false'));
+		    $this->dtgGrid->AddColumn(new QDataGridColumn('Rate', '<?= $_ITEM->Rate ?>', 'Width=100','CssClass=dtg_column'));
+		    
+		    // Make the DataGrid look nice
+			//$objStyle = $this->dtgGrid->RowStyle;
+			//$objStyle->CssClass = "row";
+
+			$objStyle = $this->dtgGrid->HeaderRowStyle;
+			$objStyle->CssClass = "dtg_header";
+			
+			$this->dtgGrid->DataSource = ShippingTiers::QueryArray(
+					QQ::NotEqual(QQN::ShippingTiers()->Rowid, 0),
+					QQ::Clause(QQ::OrderBy(QQN::ShippingTiers()->StartPrice))
+				);
+		    
+		    	
 			
 		 	$this->btnSave = new QButton($this);
 		 	$this->btnSave->Text = _sp('Save');
@@ -2007,11 +2030,32 @@
 		 	
 		 	
 		 	$this->strTemplate = adminTemplate($page->Key.'.tpl.php');
-		 	
 						
 	
 		 	
 		 }
+		 
+		 private function dtgItems_Bind()
+		 {
+		 
+		 	$objItemsArray = ShippingTiers::LoadAll();
+    		        
+
+			$this->dtgGrid->TotalItemCount = count($objItemsArray);
+			
+			
+			// If we are editing someone new, we need to add a new (blank) person to the data source
+			//if ($this->intEditRowid == -1)
+			//	array_push($objItemsArray, new $className);
+
+			// Bind the datasource to the datagrid
+			$this->dtgGrid->DataSource = $objItemsArray;
+
+		 
+		 
+		 
+		 }
+		 
 		 
 		 public function btnChange_click()
 		 {
@@ -4845,8 +4889,7 @@
 	* see api.qcodo.com under Qpanel for methods and parameters
 	*/		
 	class xlsws_admin_shippingtasks extends xlsws_admin {
-		
-
+			
 		protected $btnCancel;
 		protected $btnSave;
 		protected $btnDelete;
