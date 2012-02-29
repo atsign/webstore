@@ -1947,6 +1947,10 @@
 		public $txtPageText;
 		public $txtProductTag;
 		
+		public $txtStart;
+		public $txtEnd;
+		public $txtRate;
+		
 		public $ctlPromoCode;
  		public $ctlExcept;
         public $ctlCategories;
@@ -1977,21 +1981,37 @@
 		 	// Next, we set the local module object
 		 	$this->objParentObject = $objParentObject;
 		 	$this->page = $page;
-		 	$this->IsShipping = ($this->page->Page == "shipping" ? 1 : 0);
+
 		 	
 		 	// Let's record the reference to the form's MethodCallBack
 		 	$this->strMethodCallBack = $strMethodCallBack;
 	
 			
-			
+			/*
 			$this->dtgGrid = new QDataGrid($this);
 			$this->dtgGrid->CellPadding = 5;
 			$this->dtgGrid->CellSpacing = 0;
 			$this->dtgGrid->CssClass = "datagrid";
 
-	    	$this->dtgGrid->AddColumn(new QDataGridColumn('Start Price', '<?= $_ITEM->StartPrice ?>', 'CssClass="dtg_column"'));
+			
+			 $this->dtgGrid->AddColumn(new QDataGridColumn('Start Price', '<?= $_FORM->FieldColumn_Render($_ITEM , \'' . 'StartPrice'  . '\') ?>'
+							, 'CssClass=dtg_column'
+							, 'Width=200'
+							, 'HtmlEntities=false'
+							)
+							);
+							
+							
 			$this->dtgGrid->AddColumn(new QDataGridColumn('End Price', '<?= $_ITEM->EndPrice ?>', 'Width=200', 'CssClass="dtg_column"', 'HtmlEntities=false'));
 		    $this->dtgGrid->AddColumn(new QDataGridColumn('Rate', '<?= $_ITEM->Rate ?>', 'Width=100','CssClass=dtg_column'));
+		    
+		   // $this->dtgGrid->SetParentControl($this);
+		   
+		
+			//Change the fields parent
+			//
+	    
+		    
 		    
 		    // Make the DataGrid look nice
 			//$objStyle = $this->dtgGrid->RowStyle;
@@ -2005,7 +2025,18 @@
 					QQ::Clause(QQ::OrderBy(QQN::ShippingTiers()->StartPrice))
 				);
 		    
-		    	
+		    // Create the other textboxes and buttons -- make sure we specify
+            // the datagrid as the parent.  If they hit the escape key, let's perform a Cancel.
+            // Note that we need to terminate the action on the escape key event, too, b/c
+            // many browsers will perform additional processing that we won't not want.
+            $this->txtStart = new QTextBox($this->dtgGrid);
+            $this->txtStart->Required = true;
+            $this->txtStart->MaxLength = 50;
+            $this->txtStart->Width = 200;
+            $this->txtStart->AddAction(new QEscapeKeyEvent(), new QAjaxAction('btnCancel_Click'));
+            $this->txtStart->AddAction(new QEscapeKeyEvent(), new QTerminateAction());
+            $this->txtStart->SetParentControl($this);
+			*/
 			
 		 	$this->btnSave = new QButton($this);
 		 	$this->btnSave->Text = _sp('Save');
@@ -2029,19 +2060,41 @@
 			$this->pxyAddNewPage->AddAction( new QClickEvent() , new QTerminateAction());
 		 	
 		 	
-		 	$this->strTemplate = adminTemplate($page->Key.'.tpl.php');
-						
-	
+		 	$this->dtgGrid = new QDataRepeater($this);
+            
+            // Let's set up pagination -- note that the form is the parent
+            // of the paginator here, because it's on the form where we
+            // make the call toe $this->dtrPersons->Paginator->Render()
+            $this->dtgGrid->Paginator = new QPaginator($this);
+            $this->dtgGrid->ItemsPerPage = 6;
+
+            // Let's create a second paginator
+            $this->dtgGrid->PaginatorAlternate = new QPaginator($this);
+
+            // Enable AJAX-based rerendering for the QDataRepeater
+            $this->dtgGrid->UseAjax = true;
+
+            // DataRepeaters use Templates to define how the repeated
+            // item is rendered
+            $this->dtgGrid->Template = adminTemplate('ship_define_tiers_row.tpl.php');
+            
+            // Finally, we define the method that we run to bind the data source to the datarepeater
+            $this->dtgGrid->SetDataBinder('dtgItems_Bind',$this);
+            
+            
 		 	
+		 	$this->strTemplate = adminTemplate($page->Key.'.tpl.php');
+			
+				 	
 		 }
 		 
-		 private function dtgItems_Bind()
+		 public function dtgItems_Bind()
 		 {
 		 
 		 	$objItemsArray = ShippingTiers::LoadAll();
     		        
 
-			$this->dtgGrid->TotalItemCount = count($objItemsArray);
+			//$this->dtgGrid->TotalItemCount = count($objItemsArray);
 			
 			
 			// If we are editing someone new, we need to add a new (blank) person to the data source
@@ -2049,13 +2102,31 @@
 			//	array_push($objItemsArray, new $className);
 
 			// Bind the datasource to the datagrid
-			$this->dtgGrid->DataSource = $objItemsArray;
-
-		 
+			//$this->dtgGrid->DataSource = $objItemsArray;
+ 			
+ 			$this->dtgGrid->DataSource = $objItemsArray;
+ 			$this->dtgGrid->TotalItemCount = count($objItemsArray);
+            
 		 
 		 
 		 }
 		 
+		    // If the person for the row we are rendering is currently being edited,
+        // show the textbox.  Otherwise, display the contents as is.
+        public function StartColumn_Render(Person $objPerson) {
+            
+              return $this->txtFirstName->RenderWithError(false);
+            
+        }
+        
+        // If the person for the row we are rendering is currently being edited,
+		// show the textbox.  Otherwise, display the contents as is.
+		public function FieldColumn_Render($objItem , $field) {
+			
+			error_log("sfield is ".$field);
+			//return $this->txtFirstName->RenderWithError(false);	
+			}
+
 		 
 		 public function btnChange_click()
 		 {
@@ -2450,7 +2521,6 @@
 		 
 		public function btnGo_click($strFormId, $strControlId, $strParameter){
 		
-		error_log("our id says ".$this->btnGo1Id." and passed is ".$strControlId);
 
 		 	switch ($this->page->Key) {
 		 	
@@ -4973,6 +5043,17 @@
 		}
 	
 	
+		 // If the person for the row we are rendering is currently being edited,
+		// show the textbox.  Otherwise, display the contents as is.
+		public function FieldColumn_Render($objItem , $field) {
+			
+			error_log("field is ".$field);
+			//return $this->StartPrice->RenderWithError(false);	
+		}
+
+
+
+
 		
 	}
 	
