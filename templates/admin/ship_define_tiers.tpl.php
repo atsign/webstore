@@ -38,9 +38,9 @@
 						
 						<?php if($_CONTROL->EditMode): ?>
 <div class="smodule_config">
-
+<table>
 <?php $_CONTROL->dtgGrid->Render(); ?>
-								
+</table>							
 </div>
 <?php endif; ?>
 </li>

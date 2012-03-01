@@ -1947,8 +1947,8 @@
 		public $txtPageText;
 		public $txtProductTag;
 		
-		public $txtStart;
-		public $txtEnd;
+		public $txtStartPrice;
+		public $txtEndPrice;
 		public $txtRate;
 		
 		public $ctlPromoCode;
@@ -1968,6 +1968,8 @@
         public $intShippingRowID = false;
 			
         
+		public $pxyGRCreate; //the callback for when the create button is pressed
+		public $pxyGRView; //the callback for when the view button is pressed
         
 		public function __construct($objParentControl, $objParentObject, $page , $strMethodCallBack, $strControlId = null) {
 		 	// First, let's call the Parent's __constructor
@@ -1987,7 +1989,7 @@
 		 	$this->strMethodCallBack = $strMethodCallBack;
 	
 			
-			/*
+			
 			$this->dtgGrid = new QDataGrid($this);
 			$this->dtgGrid->CellPadding = 5;
 			$this->dtgGrid->CellSpacing = 0;
@@ -2005,7 +2007,7 @@
 			$this->dtgGrid->AddColumn(new QDataGridColumn('End Price', '<?= $_ITEM->EndPrice ?>', 'Width=200', 'CssClass="dtg_column"', 'HtmlEntities=false'));
 		    $this->dtgGrid->AddColumn(new QDataGridColumn('Rate', '<?= $_ITEM->Rate ?>', 'Width=100','CssClass=dtg_column'));
 		    
-		   // $this->dtgGrid->SetParentControl($this);
+		    $this->dtgGrid->SetParentControl($this);
 		   
 		
 			//Change the fields parent
@@ -2014,8 +2016,8 @@
 		    
 		    
 		    // Make the DataGrid look nice
-			//$objStyle = $this->dtgGrid->RowStyle;
-			//$objStyle->CssClass = "row";
+			$objStyle = $this->dtgGrid->RowStyle;
+			$objStyle->CssClass = "row";
 
 			$objStyle = $this->dtgGrid->HeaderRowStyle;
 			$objStyle->CssClass = "dtg_header";
@@ -2029,14 +2031,14 @@
             // the datagrid as the parent.  If they hit the escape key, let's perform a Cancel.
             // Note that we need to terminate the action on the escape key event, too, b/c
             // many browsers will perform additional processing that we won't not want.
-            $this->txtStart = new QTextBox($this->dtgGrid);
-            $this->txtStart->Required = true;
-            $this->txtStart->MaxLength = 50;
-            $this->txtStart->Width = 200;
-            $this->txtStart->AddAction(new QEscapeKeyEvent(), new QAjaxAction('btnCancel_Click'));
-            $this->txtStart->AddAction(new QEscapeKeyEvent(), new QTerminateAction());
-            $this->txtStart->SetParentControl($this);
-			*/
+            $this->txtStartPrice = new QTextBox($this->dtgGrid,$this);
+            $this->txtStartPrice->Required = true;
+            $this->txtStartPrice->MaxLength = 50;
+            $this->txtStartPrice->Width = 200;
+            $this->txtStartPrice->AddAction(new QEscapeKeyEvent(), new QAjaxAction('btnCancel_Click'));
+            $this->txtStartPrice->AddAction(new QEscapeKeyEvent(), new QTerminateAction());
+            $this->txtStartPrice->SetParentControl($this);
+			
 			
 		 	$this->btnSave = new QButton($this);
 		 	$this->btnSave->Text = _sp('Save');
@@ -2060,7 +2062,11 @@
 			$this->pxyAddNewPage->AddAction( new QClickEvent() , new QTerminateAction());
 		 	
 		 	
-		 	$this->dtgGrid = new QDataRepeater($this);
+		 	$this->pxyGRCreate = new QControlProxy($this);
+			$this->pxyGRView = new QControlProxy($this);
+
+
+		 	/*$this->dtgGrid = new QDataRepeater($this);
             
             // Let's set up pagination -- note that the form is the parent
             // of the paginator here, because it's on the form where we
@@ -2081,11 +2087,17 @@
             // Finally, we define the method that we run to bind the data source to the datarepeater
             $this->dtgGrid->SetDataBinder('dtgItems_Bind',$this);
             
-            
-		 	
-		 	$this->strTemplate = adminTemplate($page->Key.'.tpl.php');
-			
-				 	
+ 		 	
+		 				
+			$this->txtStartPrice = new QTextBox($this);
+			$this->txtStartPrice->Required = true;
+			$this->txtStartPrice->Height = 20;
+ 			$this->txtStartPrice->SetParentControl($this);
+		*/
+				 
+			$this->strTemplate = adminTemplate($page->Key.'.tpl.php');
+
+	
 		 }
 		 
 		 public function dtgItems_Bind()
@@ -2123,8 +2135,9 @@
 		// show the textbox.  Otherwise, display the contents as is.
 		public function FieldColumn_Render($objItem , $field) {
 			
-			error_log("sfield is ".$field);
-			//return $this->txtFirstName->RenderWithError(false);	
+			//error_log("sfield is ".$field);
+			error_log("here");
+			return $this->txtFirstName->RenderWithError(false);	
 			}
 
 		 
@@ -5043,14 +5056,7 @@
 		}
 	
 	
-		 // If the person for the row we are rendering is currently being edited,
-		// show the textbox.  Otherwise, display the contents as is.
-		public function FieldColumn_Render($objItem , $field) {
-			
-			error_log("field is ".$field);
-			//return $this->StartPrice->RenderWithError(false);	
-		}
-
+	
 
 
 
