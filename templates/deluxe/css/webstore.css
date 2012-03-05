@@ -232,13 +232,23 @@ height:24px;
 width:98px;
 }
 
-li#search {
+#searchedge {
 border-left:1px solid #fff;
 clear:both;
-height:36px;
+height:30px;
 padding:6px 10px 0 18px;
 position:absolute;
-width:200px;
+margin-left:557px;
+width:1px;
+}
+#search {
+border-left:1px solid #000;
+clear:both;
+height:30px;
+padding:6px 10px 0 18px;
+position:absolute;
+margin-left:558px;
+width:199px;
 }
 
 ul.autocomplete {
@@ -263,8 +273,8 @@ border-right: 1px solid #ccc;
 border-left: 1px solid #ccc;
 }
 
-li.search_item {background: #FFFFFF;}
-li.search_item:hover, ul.autocomplete li.search_selected {background: #48E507; }
+.search_item {background: #FFFFFF;}
+.search_item:hover, .autocomplete .search_selected {background: #48E507; }
 
 /***** Crumbtrail *****/
 #breadcrumbs {
