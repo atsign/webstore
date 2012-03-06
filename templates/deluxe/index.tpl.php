@@ -155,10 +155,9 @@
 				<li id="products"><a href="index.php"></a></li>
 				<?php
 				foreach ($this->arrTopTabs as $arrTab)
-					echo '<li id="newProducts"><a href="'._xls_custom_page_url($arrTab->Key).'">'._sp($arrTab->Title).'</a></li>';
-				?>
-				
-			</ul><div id="searchedge"></div><div id="search"><?php $this->searchPnl->Render(); ?></div>				
+					echo '<li id="tab'.count($this->arrTopTabs).'"><a href="'.$arrTab->Link.'">'._sp($arrTab->Title).'</a></li>';
+				?>				
+			</ul><div id="searchedge"></div><div id="searchentry"><?php $this->searchPnl->Render(); ?></div>				
 		</div>
 
 			<?php $this->crumbTrail->Render(); ?>
@@ -190,7 +189,7 @@
 			<div class="right">
 			<?php
 				foreach ($this->arrBottomTabs as $arrTab)
-					echo '<a href="'._xls_custom_page_url($arrTab->Key).'">'._sp($arrTab->Title).'</a> |';
+					echo '<a href="'.$arrTab->Link.'">'._sp($arrTab->Title).'</a> |';
 				?><a href="index.php?xlspg=sitemap"><?php _xt('Sitemap'); ?></a>
 			</div>
 	</div>

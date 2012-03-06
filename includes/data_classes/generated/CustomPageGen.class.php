@@ -410,6 +410,7 @@
 			$objBuilder->AddSelectItem($strTableName, 'modified', $strAliasPrefix . 'modified');
 			$objBuilder->AddSelectItem($strTableName, 'created', $strAliasPrefix . 'created');
 			$objBuilder->AddSelectItem($strTableName, 'product_tag', $strAliasPrefix . 'product_tag');
+			$objBuilder->AddSelectItem($strTableName, 'tab_position', $strAliasPrefix . 'tab_position');
 		}
 
 
