@@ -55,7 +55,7 @@ class eway_cvn_aus extends credit_card {
 	 *
 	 */
 	public function admin_name() {
-		return "eWAY CVN (Australia)";
+		return "eWAY CVN (Australia) Advanced Integration";
 	}
 
 	/**
@@ -86,7 +86,7 @@ class eway_cvn_aus extends credit_card {
 		$ret['ls_payment_method'] = new XLSTextBox($objParent);
 		$ret['ls_payment_method']->Name = _sp('LightSpeed Payment Method');
 		$ret['ls_payment_method']->Required = true;
-		$ret['ls_payment_method']->Text = 'Credit Card';
+		$ret['ls_payment_method']->Text = 'Web Credit Card';
 		$ret['ls_payment_method']->ToolTip = "Please enter the payment method (from LightSpeed) you would like the payment amount to import into";
 
 		return $ret;
@@ -150,6 +150,10 @@ class eway_cvn_aus extends credit_card {
 			$xmlRequest .= "<$key>$value</$key>";
 		$xmlRequest .= "</ewaygateway>";
 
+		if(_xls_get_conf('DEBUG_PAYMENTS' , false)) {
+			QApplication::Log(E_ERROR, get_class($this), "sending ".$cart->IdStr." for amt ".$cart->Total);
+		}
+
 		$xmlResponse = $this->sendTransactionToEway($xmlRequest);
 
 		$ewayResponseFields = $this->parseResponse($xmlResponse);
@@ -186,6 +190,10 @@ class eway_cvn_aus extends credit_card {
 
 		$xmlResponse = curl_exec($ch);
 
+		if(_xls_get_conf('DEBUG_PAYMENTS' , false)) {
+			QApplication::Log(E_ERROR, get_class($this), "receiving ".$xmlResponse);
+		}
+		
 		if(curl_errno( $ch ) == CURLE_OK)
 			return $xmlResponse;
 	}

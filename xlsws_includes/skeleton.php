@@ -54,6 +54,9 @@ class xlsws_index extends QForm {
 	protected $menu_categories; //the list of categories in the form of an array in a tree format
 	protected $dummy_drag_drop; //a drag n drop placeholder
 
+	protected $arrTopTabs; //Top tabs for index page
+	protected $arrBottomTabs; //Bottom tabs for index page
+		
 	protected $crumbs; //the array of crumbs in the crumbtrail
 	protected $txtSearchBox; //the input textbox for the search field
 	protected $lblLogout; //the label for the word logout
@@ -70,7 +73,8 @@ class xlsws_index extends QForm {
 	public $blnGetScreenRes = false; //true or false, get the current shopper's screen resolution
 
 	/*Shared widgets by customer register and checkout*/
-	protected $txtCREmail; //input textbox for email address
+    /*
+    protected $txtCREmail; //input textbox for email address
 	protected $txtCRFName; //input textbox for first name
 	protected $txtCRLName; //input textbox for last name
 	protected $txtCRCompany; //input textbox for company name
@@ -94,6 +98,7 @@ class xlsws_index extends QForm {
 	protected $txtCRBillCity; //input text box for billing city
 	protected $txtCRBillZip; //input text box for billing zip or postal code
 	protected $txtCRVerify; //input text box for entering the captcha image
+    */
 
 	protected $objShipStateWait; //object to hold wait icon for when a shipping state changes
 	protected $objBillStateWait; //object to hold wait icon for when a billing state changes
@@ -101,10 +106,12 @@ class xlsws_index extends QForm {
 	protected $objSameWait; //object to hold wait icon for when someone chooses shipping address is the same as billing
 	protected $saveWrap; //wrapper that goes around the save
 
+    /*
 	protected $pnlBillingAdde; //The QPanel that shows the input fields for the customer billing address
 	protected $pnlShippingAdde; //The QPanel that shows the input fields for the customer shipping address
+    */
 
-	/**
+    /**
 	 * build_menu - builds the category tree
 	 * @param none
 	 * @return none
@@ -460,40 +467,42 @@ class xlsws_index extends QForm {
 	 * @param XLSListBox $listbox :: The ListBox widget you wish to add countries to
 	 * @return none
 	 */
-	protected function add_countries_to_listbox($listbox) {
-		$countriesSeen = array();
+    protected function add_countries_to_listbox($listbox) {
+        $strCountryArray = array();
+        $objCountries = false;
 
+		$listbox->RemoveAllItems();
+
+        // Restrict Countries to defined Destinations
 		if (_xls_get_conf('SHIP_RESTRICT_DESTINATION')) {
-			// we are restricting destinations
+            $strQuery = <<<EOS
+SELECT DISTINCT `country` AS country
+FROM `xlsws_destination`
+WHERE `country` != "*";
+EOS;
 
-			$validDestCountries = Destination::LoadAll();
+            $objQuery = _dbx($strQuery, 'Query');
+            while ($arrRow = $objQuery->FetchArray())
+                $strCountryArray[] = $arrRow['country'];
+        }
 
-			if ($validDestCountries) foreach ($validDestCountries as $validDest) {
-				// for each valid destination, attempt to retreive the country and add the item to the listbox
-				$code = $validDest->Country;
+        if (!count($strCountryArray)) {
+            $objCountries = Country::LoadArrayByAvail(
+                'Y', Country::GetDefaultOrdering()
+            );
+        }
+        else {
+            $objCountries = Country::QueryArray(
+                QQ::AndCondition(
+                    QQ::Equal(QQN::Country()->Avail, 'Y'),
+                    QQ::In(QQN::Country()->Code, $strCountryArray)
+                ),
+                Country::GetDefaultOrdering()
+            );
+        }
 
-				if ($code && ! array_key_exists($code, $countriesSeen)) {
-					$countriesSeen[$code] = true;
-
-					$country = Country::LoadByCode($code);
-
-					if ($country) {
-						$listbox->AddItem($country->Country, $code);
-					} // end if we got a country
-				} // end if the destination had a code set
-			} // end loop over valid destinations
-		} // end if we are restricting destinations.
-
-
-		if (! count(array_keys($countriesSeen))) {
-			// either we aren't restricting destinations, or no destinations were found.
-
-			$objCountries = Country::LoadArrayByAvail('Y', QQ::Clause(QQ::OrderBy(QQN::Country()->SortOrder, QQN::Country()->Country)));
-
-			if ($objCountries) foreach ($objCountries as $objCountry) {
-				$listbox->AddItem($objCountry->Country, $objCountry->Code);
-			}
-		}
+        foreach ($objCountries as $objCountry)
+            $listbox->AddItem($objCountry->Country, $objCountry->Code);
 	}
 
 	/**
@@ -512,49 +521,60 @@ class xlsws_index extends QForm {
 	 * @param string $country_code :: 2 letter country code
 	 * @return integer $statesListed :: number of listed states
 	 */
-	protected function add_states_to_listbox_for_country($listbox, $country_code) {
-		$statesListed = 0;
-		$statesSeen = array();
+    protected function add_states_to_listbox_for_country($listbox, $strCountry) {
+        $strStateArray = array();
+        $objStates = array();
 
 		$listbox->RemoveAllItems();
 
-		if ($country_code) {
-			$statesSeen = $this->states_for_country_code($country_code);
-			$statesListed = count($statesSeen);
-			if (_xls_get_conf('SHIP_RESTRICT_DESTINATION')) {
-				$statesSeen = array();
-				$statesListed = 0;
-				// we are restricting destinations
-				$validDestStates = Destination::LoadByCountry($country_code,true);
+        if (!$strCountry) {
+            $listbox->AddItem('--', null);
+            return false;
+        }
 
-				if ($validDestStates) foreach ($validDestStates as $validDest) {
-					// for each valid destination, attempt to retreive the country and add the item to the listbox
-					$code = $validDest->State;
+        if (_xls_get_conf('SHIP_RESTRICT_DESTINATION')) {
+            $strQuery = <<< EOS
+SELECT DISTINCT `state` AS state
+FROM `xlsws_destination`
+WHERE `country` = "{$strCountry}"
+EOS;
 
-					if ($code) {
-						$state = State::LoadByCountryCodeCode($country_code, $code);
+            $objQuery = _dbx($strQuery, 'Query');
+            while ($arrRow = $objQuery->FetchArray())
+                $strStateArray[] = $arrRow['state'];
 
-						if ($state) {
-							$statesSeen[] = $state;
-							$statesListed++;
-						}
-					} // end if the destination had a code set
-				} // end loop over valid destinations
-			} // end if we are restricting destinations.
+            if (in_array('*', $strStateArray))
+                $strStateArray = array();
+        }
 
-			if ($statesListed) {
-				$listbox->AddItem(_sp('-- Select One --'), null);
+        if (!count($strStateArray)) {
+            $objStates = State::QueryArray(
+                QQ::AndCondition(
+                    QQ::Equal(QQN::State()->Avail, 'Y'),
+                    QQ::Equal(QQN::State()->CountryCode, $strCountry)
+                ),
+                State::GetDefaultOrdering()
+            );
+        }
+        else {
+            $objStates = State::QueryArray(
+                QQ::AndCondition(
+                    QQ::Equal(QQN::State()->Avail, 'Y'),
+                    QQ::Equal(QQN::State()->CountryCode, $strCountry),
+                    QQ::In(QQN::State()->Code, $strStateArray)
+                ),
+                State::GetDefaultOrdering()
+            );
+        }
 
-				foreach($statesSeen as $state) {
-					$listbox->AddItem($state->State, $state->Code);
-				}
-			}
-		}
+        if (count($objStates)) {
+            $listbox->AddItem(_sp('-- Select One --'), null);
+            foreach ($objStates as $objState)
+                $listbox->AddItem($objState->State, $objState->Code);
+        }
+        else $listbox->AddItem('--', null);
 
-		if (! $statesListed)
-			$listbox->AddItem('--', null);
-
-		return $statesListed;
+		return $objStates;
 	}
 
 	/**
@@ -648,10 +668,10 @@ class xlsws_index extends QForm {
 	 * @return boolean true or false
 	 */
 	public static function isLoggedIn() {
-		$customer = Customer::GetCurrent();
+        $objCustomer = Customer::GetCurrent();
 
-		if ($customer && !is_null($customer))
-			return true;
+        if ($objCustomer && $objCustomer->Rowid)
+            return true;
 
 		return false;
 	}
@@ -740,6 +760,30 @@ class xlsws_index extends QForm {
 	}
 
 	/**
+	 * build_tabs - reads array for the tabs for the template
+	 * @param none
+	 * @return none
+	 */
+	protected function build_tabs() {
+	
+	
+		$this->arrTopTabs = CustomPage::QueryArray(
+		        QQ::AndCondition(
+		            QQ::GreaterOrEqual(QQN::CustomPage()->TabPosition,10),
+		            QQ::LessOrEqual(QQN::CustomPage()->TabPosition,19)
+		        )
+		    );
+		$this->arrBottomTabs = CustomPage::QueryArray(
+		        QQ::AndCondition(
+		            QQ::GreaterOrEqual(QQN::CustomPage()->TabPosition,20),
+		            QQ::LessOrEqual(QQN::CustomPage()->TabPosition,29)
+		        )
+		    );
+		
+	
+	}
+	
+	/**
 	 * continue_shopping - takes the customer back to the last page they were from the cart page
 	 * @param integer, integer, string $strFormId, $strControlId, $strParameter :: Passed by Qcodo by default
 	 * @return none
@@ -824,6 +868,12 @@ class xlsws_index extends QForm {
 		exit();
 	}
 
+    protected function Form_Preload() {
+		$visitor = Visitor::get_visitor();
+		if($visitor->ScreenRes == '')
+			$this->blnGetScreenRes = true;
+    }
+
 	/**
 	 * Form_Create - takes all panels and builds them into a page with a form
 	 * @param none
@@ -832,10 +882,7 @@ class xlsws_index extends QForm {
 	protected function Form_Create() {
 		global $XLSWS_VARS;
 
-		$visitor = Visitor::get_visitor();
-
-		if($visitor->ScreenRes == '')
-			$this->blnGetScreenRes = true;
+        $this->Form_PreLoad();
 
 		// manage SSL forwarding
 		if($this->require_ssl() && _xls_get_conf( 'ENABLE_SSL' , false)) {
@@ -867,6 +914,7 @@ class xlsws_index extends QForm {
 		$this->build_crumb();
 		$this->build_login();
 		$this->build_side_bar();
+		$this->build_tabs();
 
 		$this->build_main();
 
@@ -1277,66 +1325,13 @@ class xlsws_index extends QForm {
 	 * @return none
 	 */
 	public static function completeOrder($cart = false , $customer = false , $forward = true) {
-		if(!$cart)
-			$cart = Cart::GetCart();
-
-		if(function_exists('_custom_before_order_complete'))
-				_custom_before_order_complete($cart);
-
-		if(!$customer) {
-			$customer = new Customer();
-			$customer->Company = $cart->ShipCompany;
-			$customer->Firstname = $cart->ShipFirstname;
-			$customer->Lastname = $cart->ShipLastname;
-			$customer->Address11 = $cart->ShipAddress1;
-			$customer->Address12 = $cart->ShipAddress2;
-			$customer->City1 = $cart->ShipCity;
-			$customer->Email = $cart->Email;
-			$customer->State1 = $cart->ShipState;
-			$customer->Country1 = $cart->ShipCountry;
-			$customer->Mainphone = $cart->Phone;
-		}
-
-		$cart->Type = CartType::order;
-		$cart->Submitted = QDateTime::Now(true);
-
-		Cart::SaveCart($cart);
-		$order_id = $cart->IdStr;
-		$zipcode = $cart->Zipcode;
-
-		// clear out the cart from session
-		Cart::ClearCart();
-
-		_xls_stack_add('xls_submit_order', true);
-
-		if(function_exists('_custom_after_order_complete'))
-			_custom_after_order_complete($cart);
-			        
-        //Sending receipts
-        xlsws_index::send_email($cart);	
-         
-		// Show invoice
-		if($forward)
-			_rd($cart->Link);
-
+        QApplication::Log(E_USER_NOTICE, 'legacy', __FUNCTION__);
+        return xlsws_checkout::FinalizeCheckout($cart, $customer, $forwarD);
 	}
 
 	public static function send_email($cart) {
-		$order_id = $cart->IdStr;
-		$zipcode = $cart->Zipcode;
-
-		_xls_mail(
-			$cart->Email,
-			_xls_get_conf('STORE_NAME', 'Web') . " " . _sp("Order Notification") . " " . $order_id,
-			_xls_mail_body_from_template(templateNamed('email_order_notification.tpl.php'), array('cart' => $cart, 'customer' =>$customer)),
-			_xls_get_conf('ORDER_FROM')
-		);
-
-		_xls_mail(
-			_xls_get_conf('ORDER_FROM'),
-			_xls_get_conf('STORE_NAME' , 'Web') . " " . _sp("Order Notification") . " " . $order_id,
-			_xls_mail_body_from_template(templateNamed('email_order_notification_owner.tpl.php') , array('cart' => $cart , 'customer' =>$customer)),
-			_xls_get_conf('ORDER_FROM')
-		);
+        QApplication::Log(E_USER_NOTICE, 'legacy', __FUNCTION__);
+        xlsws_checkout::SendCustomerEmail($cart, null);
+        xlsws_checkout::SendOwnerEmail($cart, null);
 	}
 }

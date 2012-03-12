@@ -55,7 +55,7 @@ class worldpay extends xlsws_class_payment {
 	 *
 	 */
 	public function admin_name() {
-		return "WorldPay";
+		return "WorldPay Simple Integration";
 	}
 
 	/**
@@ -86,7 +86,7 @@ class worldpay extends xlsws_class_payment {
 		$ret['ls_payment_method'] = new XLSTextBox($objParent);
 		$ret['ls_payment_method']->Name = _sp('LightSpeed Payment Method');
 		$ret['ls_payment_method']->Required = true;
-		$ret['ls_payment_method']->Text = 'Credit Card';
+		$ret['ls_payment_method']->Text = 'Web Credit Card';
 		$ret['ls_payment_method']->ToolTip = "Please enter the payment method (from LightSpeed) you would like the payment amount to import into";
 
 		return $ret;
@@ -192,7 +192,7 @@ class worldpay extends xlsws_class_payment {
 
 		if(empty($XLSWS_VARS['transId'])) {
 			// failed order
-			_xls_log("WorldPay failed order payment recieved " . print_r($XLSWS_VARS , true)) ;
+			_xls_log("WorldPay failed order payment received " . print_r($XLSWS_VARS , true)) ;
 
 			return false;
 		}

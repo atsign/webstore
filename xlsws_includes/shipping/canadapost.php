@@ -32,32 +32,9 @@
 
 class canadapost extends xlsws_class_shipping {
 	public $service_types;
-
-	/**
-	 * The name of the shipping module that will be displayed in the checkout page
-	 * @return string
-	 *
-	 *
-	 */
-	public function name() {
-		$config = $this->getConfigValues(get_class($this));
-
-		if(isset($config['label']))
-			return $config['label'];
-
-		return $this->admin_name();
-	}
-
-	/**
-	 * The name of the shipping module that will be displayed in Web Admin payments
-	 * @return string
-	 *
-	 *
-	 */
-	public function admin_name() {
-		return _sp("Canada Post");
-	}
-
+	protected $strModuleName = "Canada Post";
+	
+	
 	/**
 	 * check() verifies nothing has changed in the configuration since initial load
 	 * @return boolean
@@ -285,7 +262,13 @@ class canadapost extends xlsws_class_shipping {
 		curl_setopt ($ch, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt ($ch, CURLOPT_SSL_VERIFYPEER, 0);
 		$result = curl_exec ($ch);
-
+		
+		if(_xls_get_conf('DEBUG_SHIPPING' , false)) {
+			QApplication::Log(E_ERROR, get_class($this), "sending ".$xml);
+			QApplication::Log(E_ERROR, get_class($this), "receiving ".$result);
+		}
+		
+		
 		$values = array();
 		$index = array();
 		$array = array();

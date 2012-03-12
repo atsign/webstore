@@ -55,7 +55,7 @@ class Paypal extends xlsws_class_payment {
 	 *
 	 */
 	public function admin_name() {
-		return _sp('PayPal');
+		return _sp('PayPal (Simple Integration)');
 	}
 
 	/**
@@ -85,7 +85,7 @@ class Paypal extends xlsws_class_payment {
 		$ret['ls_payment_method'] = new XLSTextBox($objParent);
 		$ret['ls_payment_method']->Name = _sp('LightSpeed Payment Method');
 		$ret['ls_payment_method']->Required = true;
-		$ret['ls_payment_method']->Text = 'Credit Card';
+		$ret['ls_payment_method']->Text = 'Web Credit Card';
 		$ret['ls_payment_method']->ToolTip = "Please enter the payment method (from LightSpeed) you would like the payment amount to import into";
 
 		return $ret;
@@ -207,28 +207,33 @@ class Paypal extends xlsws_class_payment {
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE); // uncomment this line if you get no gateway response.
 		$resp = curl_exec($ch); //execute post and get results
 		curl_close ($ch);
-
+		
 		if (strpos($resp,"VERIFIED") !== FALSE) {
-			$retarr =  array(
-				'order_id' => $XLSWS_VARS['item_name'],
-				'amount' => $XLSWS_VARS['mc_gross'],
-				'success' => true,
-				'data' => $XLSWS_VARS['txn_id'],
-			);
-
-			_xls_log("Paypal success " . print_r($retarr , true));
-
-			return $retarr;
+		
+			if ($XLSWS_VARS['payment_status']=="Completed")
+			{
+				$retarr =  array(
+					'order_id' => $XLSWS_VARS['item_name'],
+					'amount' => $XLSWS_VARS['mc_gross'],
+					'success' => true,
+					'data' => $XLSWS_VARS['txn_id'],
+				);
+				QApplication::Log(E_ERROR, 'Paypal', "Paypal ".$XLSWS_VARS['payment_status']." " . print_r($retarr , true));
+				return $retarr;
+			}
+			else
+			{
+				QApplication::Log(E_ERROR, 'Paypal', "Paypal reported ".
+					$XLSWS_VARS['payment_status']." payment on " . $XLSWS_VARS['item_name']);
+				return false;
+			}
+						
+			
+			
 		} else {
-			$retarr =  array(
-				'order_id' => $XLSWS_VARS['item_name'],
-				'amount' => "0.00",
-				'success' => false,
-				'data' => 'fail',
-			);
-			_xls_log("Paypal fail " . print_r($retarr , true));
 
-			return $retarr;
+			QApplication::Log(E_ERROR, 'Paypal', "Paypal IPN verification failed " . print_r($XLSWS_VARS , true));
+			return false;
 		}
 	}
 

@@ -37,7 +37,6 @@
 
 <?php $this->pnlLoginRegister->Render(); ?>
 
-
 <?php $this->pnlCustomer->Render(); ?>
 
 <?php $this->pnlBillingAdde->Render(); ?>
@@ -46,6 +45,7 @@
 
 <br style="clear: both;"/>
 <?php if(isset($this->pnlPromoCode) && ($this->pnlPromoCode->Visible)): ?>
+
 <?php $this->pnlPromoCode->Render() ?>
 <?php endif; ?>
 
@@ -65,5 +65,5 @@
 			
 <?php $this->pnlVerify->Render(); ?>		  			
 
-
+<?php $this->LoadActionProxy->Render(); ?>
 </div>			

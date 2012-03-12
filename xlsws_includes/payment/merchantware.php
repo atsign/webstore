@@ -74,7 +74,7 @@ class merchantware extends credit_card {
 		$ret['ls_payment_method'] = new XLSTextBox($objParent);
 		$ret['ls_payment_method']->Name = _sp('LightSpeed Payment Method');
 		$ret['ls_payment_method']->Required = true;
-		$ret['ls_payment_method']->Text = 'Credit Card';
+		$ret['ls_payment_method']->Text = 'Web Credit Card';
 		$ret['ls_payment_method']->ToolTip = "Please enter the payment method (from LightSpeed) you would like the payment amount to import into";
 
 		return $ret;
@@ -128,7 +128,7 @@ class merchantware extends credit_card {
                         <strExpDate>'.$card_info_expiry.'</strExpDate>
                         <strCardHolder>'.$customer->Firstname.' '.$customer->Lastname.'</strCardHolder>
                         <strAVSStreetAddress>'.$customer->Address11.'</strAVSStreetAddress>
-                        <strAVSZipCode>'.$customer->Zip1.'</strAVSZipCode>
+                        <strAVSZipCode>'.str_pad($customer->Zip1, 5, '0', STR_PAD_RIGHT).'</strAVSZipCode>
                         <strCVCode>'.$fields['ccsec']->Text.'</strCVCode>
                         <strAllowDuplicates>'.$trans_info_allow_duplicate.'</strAllowDuplicates>
                         <strRegisterNum>'.$trans_info_register_num .'</strRegisterNum>
@@ -154,7 +154,14 @@ class merchantware extends credit_card {
 
 		$resp = curl_exec($ch);								//execute post and get results
 		curl_close ($ch);
+		if(_xls_get_conf('DEBUG_PAYMENTS' , false))
+			QApplication::Log(E_ERROR, get_class($this), $resp);		
 
+		if(_xls_get_conf('DEBUG_PAYMENTS' , false)) {
+			QApplication::Log(E_ERROR, get_class($this), "sending ".$cart->IdStr." for amt ".$cart->Total);
+			QApplication::Log(E_ERROR, get_class($this), "receiving ".$resp);
+		}
+		
 		// Parse xml for response values
 		$oXML = new SimpleXMLElement($resp);
 

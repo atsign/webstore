@@ -50,9 +50,9 @@ function _xls_fopen_w($filename) {
  * @return string :: Converted path relative to __SITEROOT__
  */
 function templateNamed($name) {
-	if(_xls_get_conf('DEBUG_TEMPLATE' , false) && stristr($name , ".tpl")) {
-		_xls_stack_add('template_used' , $name);
-	}
+    if (_xls_get_conf('DEBUG_TEMPLATE', 0) == 1)
+        if (stristr($name, '.tpl'))
+            xls_stack_add('template_used', $name);
 
 	$file = 'templates/' . _xls_get_conf('DEFAULT_TEMPLATE' , 'xsilva') . '/'.$name;
 	if(!file_exists($file) && stristr($name , ".tpl")) {
@@ -677,26 +677,21 @@ function _xls_remove_leading_slash($path) {
 }
 
 /**
- * Return the Base URL for the site
- * Also perform http/https conversion if need be.
- *
- * @param boolean ssl_attempt
- * @return string url
- */
+* Return the Base URL for the site
+* Also perform http/https conversion if need be.
+*
+* @param boolean ssl_attempt
+* @return string url
+*/
 function _xls_site_dir($ssl_attempt = true) {
-	$strUrlPfx = '';
-	if (isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on'))
-		$strUrlPfx = 'https://';
-	else
-		$strUrlPfx = 'http://';
+	$strSsl = 'http://';
+	$strHost = $_SERVER['HTTP_HOST'] . dirname(QApplication::$ScriptName);
+	
+	if ($ssl_attempt && isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on'))
+		$strSsl = 'https://';
+	if (substr($strHost,-1)=="/") $strHost = substr($strHost, 0, -1);
 
-	$strUrlPath = '';
-	if (dirname($_SERVER['PHP_SELF']) == '/')
-		$strUrlPath = '';
-	else
-		$strUrlPath = dirname($_SERVER['PHP_SELF']);
-
-	return $strUrlPfx . $_SERVER['HTTP_HOST'] . $strUrlPath;
+	return $strSsl . $strHost;
 }
 
 /**
@@ -1152,11 +1147,16 @@ function _xls_build_query($array, $query = '', $prefix = '') {
  * @return string
  */
 function _xls_custom_page_url($page) {
+//Best workaround until Contact Us forms can be refactored
+//This will change with the SEO changes a bit later anyway
+//ToDo:
+	if ($page=="contactus") return "index.php?xlspg=contact_us";
 	if(!_xls_get_conf('ENABLE_SEO_URL' , false))
 		return "index.php?cpage=$page";
 
 	$cpage = CustomPage::LoadByKey($page);
 
+	
 	if($cpage)
 		return $cpage->Link;
 

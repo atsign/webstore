@@ -57,7 +57,7 @@ class beanstream_aim extends credit_card {
 	 *
 	 */
 	public function admin_name() {
-		return "Beanstream (Canada/USA)";
+		return "Beanstream Advanced Integration (Canada/USA)";
 	}
 
 
@@ -89,7 +89,7 @@ class beanstream_aim extends credit_card {
 		$ret['ls_payment_method'] = new XLSTextBox($objParent);
 		$ret['ls_payment_method']->Name = _sp('LightSpeed Payment Method');
 		$ret['ls_payment_method']->Required = true;
-		$ret['ls_payment_method']->Text = 'Credit Card';
+		$ret['ls_payment_method']->Text = 'Web Credit Card';
 		$ret['ls_payment_method']->ToolTip = "Please enter the payment method (from LightSpeed) you would like the payment amount to import into";
 
 		return $ret;
@@ -164,6 +164,13 @@ class beanstream_aim extends credit_card {
 		$resp = curl_exec($ch); //execute post and get results
 		curl_close ($ch);
 		$resp_vals = array();
+		if(_xls_get_conf('DEBUG_PAYMENTS' , false))
+			QApplication::Log(E_ERROR, get_class($this), $resp);		
+
+		if(_xls_get_conf('DEBUG_PAYMENTS' , false)) {
+			QApplication::Log(E_ERROR, get_class($this), "sending ".$cart->IdStr." for amt ".$cart->Total);
+			QApplication::Log(E_ERROR, get_class($this), "receiving ".$resp);
+		}
 
 		parse_str($resp, $resp_vals);
 
